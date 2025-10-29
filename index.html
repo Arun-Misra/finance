@@ -1,0 +1,3187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>FinGenie - Your Finance Companion 🧞‍♂️</title>
+    <link
+      rel="manifest"
+      href="data:application/json;base64,eyJuYW1lIjoiRmluR2VuaWUiLCJzaG9ydF9uYW1lIjoiRmluR2VuaWUiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzZDNUNFNyIsInRoZW1lX2NvbG9yIjoiIzZDNUNFNyJ9"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :root {
+        --primary: #6c5ce7;
+        --secondary: #00b894;
+        --accent: #fdcb6e;
+        --danger: #ff6b6b;
+        --text-dark: #2d3436;
+        --text-light: #636e72;
+        --bg-light: #f8f9fa;
+        --card-bg: #ffffff;
+        --shadow: rgba(108, 92, 231, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg-light);
+        color: var(--text-dark);
+        overflow: hidden;
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #app {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Main Content Area */
+      .screen {
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 16px 80px 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .screen.active {
+        display: block;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* Bottom Navigation */
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        z-index: 100;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        color: var(--text-light);
+        transition: var(--transition);
+        border: none;
+        background: none;
+        font-size: 12px;
+        min-width: 60px;
+      }
+
+      .nav-item.active {
+        color: var(--primary);
+      }
+
+      .nav-item .icon {
+        font-size: 24px;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 12px var(--shadow);
+        transition: var(--transition);
+      }
+
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 14px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        width: 100%;
+        text-align: center;
+        display: inline-block;
+        min-height: 44px;
+      }
+
+      .btn:active {
+        transform: scale(0.95);
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-secondary {
+        background: var(--secondary);
+        color: white;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      /* Header */
+      .header {
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        font-size: clamp(24px, 6vw, 28px);
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .header p {
+        color: var(--text-light);
+        font-size: clamp(12px, 3vw, 14px);
+      }
+
+      /* XP Progress Bar */
+      .xp-card {
+        background: linear-gradient(135deg, var(--primary) 0%, #a29bfe 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .xp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .level-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+      }
+
+      .xp-bar {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .xp-bar-fill {
+        height: 100%;
+        background: white;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+      }
+
+      .xp-text {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      /* Transaction List */
+      .transaction-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .transaction-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-light);
+        border-radius: 10px;
+        font-size: 20px;
+      }
+
+      .transaction-info {
+        flex: 1;
+      }
+
+      .transaction-name {
+        font-weight: 600;
+        font-size: clamp(14px, 3.5vw, 15px);
+        margin-bottom: 2px;
+      }
+
+      .transaction-category {
+        font-size: clamp(11px, 2.8vw, 12px);
+        color: var(--text-light);
+      }
+
+      .transaction-amount {
+        font-weight: 700;
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+
+      .transaction-amount.credit {
+        color: var(--secondary);
+      }
+
+      .transaction-amount.debit {
+        color: var(--danger);
+      }
+
+      /* Category Chips */
+      .category-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .chip {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 2px solid #e9ecef;
+        background: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .chip.selected {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 200;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 400px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        font-size: clamp(18px, 5vw, 22px);
+        font-weight: 700;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      /* Forms */
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: var(--transition);
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      /* Stats */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .stat-card {
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .stat-value {
+        font-size: clamp(16px, 4.5vw, 20px);
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: clamp(10px, 2.8vw, 12px);
+        color: var(--text-light);
+      }
+
+      /* Chart Container */
+      .chart-container {
+        position: relative;
+        height: 250px;
+        margin-bottom: 20px;
+      }
+
+      /* Goals */
+      .goal-card {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .goal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .goal-name {
+        font-size: clamp(14px, 3.5vw, 16px);
+        font-weight: 600;
+      }
+
+      .goal-amount {
+        font-size: 14px;
+        color: var(--text-light);
+      }
+
+      .progress-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--secondary), var(--accent));
+        border-radius: 4px;
+        transition: width 0.5s ease;
+      }
+
+      .progress-text {
+        font-size: 12px;
+        color: var(--text-light);
+      }
+
+      /* Badges */
+      .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .badge-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+
+      .badge-card.locked {
+        opacity: 0.5;
+      }
+
+      .badge-icon {
+        font-size: 48px;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .badge-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .badge-desc {
+        font-size: 11px;
+        color: var(--text-light);
+      }
+
+      /* Animations */
+      .xp-float {
+        position: fixed;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent);
+        pointer-events: none;
+        z-index: 1000;
+        animation: floatUp 1s ease-out forwards;
+      }
+
+      @keyframes floatUp {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translateY(-40px) scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100px) scale(1);
+          opacity: 0;
+        }
+      }
+
+      .confetti {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        pointer-events: none;
+        z-index: 1000;
+        animation: confettiFall 1s ease-out forwards;
+      }
+
+      @keyframes confettiFall {
+        to {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+      }
+
+      .empty-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+      }
+
+      .empty-title {
+        font-size: clamp(16px, 4vw, 18px);
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .empty-desc {
+        color: var(--text-light);
+        font-size: clamp(12px, 3vw, 14px);
+      }
+
+      /* Onboarding */
+      .onboarding {
+        text-align: center;
+        padding: 40px 20px;
+      }
+
+      .onboarding-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+      }
+
+      .onboarding h2 {
+        font-size: 24px;
+        margin-bottom: 12px;
+      }
+
+      .onboarding p {
+        color: var(--text-light);
+        margin-bottom: 32px;
+        line-height: 1.6;
+      }
+
+      /* Filter Bar */
+      .filter-bar {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .filter-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Insight Card */
+      .insight-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+      }
+
+      .insight-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+      }
+
+      .insight-text {
+        line-height: 1.5;
+        font-size: clamp(13px, 3.5vw, 15px);
+      }
+
+      /* Theme Selector */
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .theme-card {
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: var(--transition);
+      }
+
+      .theme-card.selected {
+        border-color: var(--primary);
+      }
+
+      .theme-card.locked {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .theme-emoji {
+        font-size: 48px;
+        margin-bottom: 8px;
+      }
+
+      .theme-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      /* Loading */
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Success Animation */
+      .success-animation {
+        text-align: center;
+        padding: 40px;
+      }
+
+      .success-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        animation: bounce 0.5s ease;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .btn-group .btn {
+        flex: 1;
+      }
+
+      /* Insights Section */
+      .insights-section {
+        margin: 16px 0;
+      }
+
+      .insight-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .insight-card {
+        padding: 16px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        transition: var(--transition);
+      }
+
+      .insight-card:active {
+        transform: scale(0.98);
+      }
+
+      .insight-card.warning {
+        border-left: 4px solid #e74c3c;
+      }
+      .insight-card.success {
+        border-left: 4px solid #00b894;
+      }
+      .insight-card.info {
+        border-left: 4px solid #3498db;
+      }
+      .insight-card.investment {
+        border-left: 4px solid #6c5ce7;
+      }
+
+      .insight-icon-main {
+        font-size: 32px;
+        flex-shrink: 0;
+      }
+
+      .insight-content {
+        flex: 1;
+      }
+
+      .insight-title {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .insight-text {
+        font-size: 13px;
+        color: var(--text-light);
+        line-height: 1.5;
+        margin-bottom: 10px;
+      }
+
+      .insight-action {
+        padding: 6px 12px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+
+      .insight-action:active {
+        transform: scale(0.95);
+      }
+
+      /* Floating Chat Button */
+      .chat-fab {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        font-size: 32px;
+        box-shadow: 0 4px 12px rgba(102, 94, 234, 0.4);
+        cursor: pointer;
+        z-index: 999;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .chat-fab:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102, 94, 234, 0.6);
+      }
+
+      .chat-fab:active {
+        transform: scale(0.95);
+      }
+
+      .chat-fab.hidden {
+        display: none;
+      }
+
+      /* Sliding Chat Panel */
+      .chat-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        max-width: 400px;
+        height: 100vh;
+        background: white;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+        z-index: 1001;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .chat-panel.open {
+        transform: translateX(0);
+      }
+
+      .chat-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .chat-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      @media (max-width: 768px) {
+        .chat-panel {
+          max-width: 100%;
+        }
+      }
+
+      .chat-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .chat-header-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .genie-avatar-large {
+        font-size: 40px;
+        line-height: 1;
+      }
+
+      .chat-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin: 0;
+      }
+
+      .close-chat-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+
+      .close-chat-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: #f8f9fa;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .chat-message {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-message.user {
+        flex-direction: row-reverse;
+      }
+
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+
+      .message-bubble {
+        background: white;
+        padding: 12px 16px;
+        border-radius: 16px;
+        max-width: 75%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      .chat-message.user .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+
+      .chat-message.assistant .message-bubble {
+        border-bottom-left-radius: 4px;
+      }
+
+      .message-bubble p {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .message-time {
+        font-size: 10px;
+        opacity: 0.6;
+        display: block;
+        margin-top: 4px;
+      }
+
+      .typing {
+        display: flex;
+        gap: 4px;
+        padding: 8px 0;
+      }
+
+      .typing span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #999;
+        animation: typing 1.4s infinite;
+      }
+
+      .typing span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes typing {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .quick-prompts {
+        padding: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .quick-prompts::-webkit-scrollbar {
+        display: none;
+      }
+
+      .prompt-chip {
+        padding: 8px 14px;
+        border-radius: 20px;
+        background: #f0f0f0;
+        border: none;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .prompt-chip:hover {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+      }
+
+      .prompt-chip:active {
+        transform: scale(0.95);
+      }
+
+      .chat-input-container {
+        padding: 1rem;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      #chatInput {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 24px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      #chatInput:focus {
+        border-color: #667eea;
+      }
+
+      .send-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .send-btn:hover {
+        transform: scale(1.05);
+      }
+
+      .send-btn:active {
+        transform: scale(0.95);
+      }
+
+      .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Responsive */
+      @media (max-width: 375px) {
+        .screen {
+          padding: 16px 12px 80px 12px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Home Screen -->
+      <div id="home" class="screen active">
+        <div class="header">
+          <h1>Welcome Back! 🧞‍♂️</h1>
+          <p id="greeting">Let's track your finances</p>
+        </div>
+
+        <div class="card xp-card" id="xpCard">
+          <div class="xp-header">
+            <div>
+              <div
+                style="font-size: 24px; font-weight: 700; margin-bottom: 4px"
+              >
+                <span id="levelEmoji">🌳</span> Level
+                <span id="currentLevel">1</span>
+              </div>
+              <div class="xp-text">
+                <span id="currentXP">0</span> /
+                <span id="nextLevelXP">100</span> XP
+              </div>
+            </div>
+            <div class="level-badge" id="themeName">Tree</div>
+          </div>
+          <div class="xp-bar">
+            <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="monthSpending">₹0</div>
+            <div class="stat-label">Spending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="monthIncome">₹0</div>
+            <div class="stat-label">Income</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="monthBalance">₹0</div>
+            <div class="stat-label">Balance</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="checkInBtn" onclick="openCheckIn()">
+          ✨ Check-in Now (<span id="uncategorizedCount">0</span>)
+        </button>
+
+        <!-- Smart Insights Section -->
+        <div class="insights-section">
+          <h3 style="margin-bottom: 12px; font-size: 18px">
+            💡 Smart Insights
+          </h3>
+          <div class="insight-cards" id="insightCards"></div>
+        </div>
+
+        <div id="adviceContainer"></div>
+      </div>
+
+      <!-- Transactions Screen -->
+      <div id="transactions" class="screen">
+        <div class="header">
+          <h1>Transactions 💸</h1>
+          <p>All your financial activity</p>
+        </div>
+
+        <div class="filter-bar">
+          <button
+            class="chip"
+            onclick="filterTransactions('all')"
+            data-filter="all"
+          >
+            All
+          </button>
+          <button
+            class="chip"
+            onclick="filterTransactions('debit')"
+            data-filter="debit"
+          >
+            Expenses
+          </button>
+          <button
+            class="chip"
+            onclick="filterTransactions('credit')"
+            data-filter="credit"
+          >
+            Income
+          </button>
+        </div>
+
+        <div id="transactionsList"></div>
+      </div>
+
+      <!-- Stats Screen -->
+      <div id="stats" class="screen">
+        <div class="header">
+          <h1>Statistics 📊</h1>
+          <p>Your spending insights</p>
+        </div>
+
+        <div class="filter-bar">
+          <button
+            class="chip selected"
+            onclick="changeStatsPeriod('week')"
+            data-period="week"
+          >
+            This Week
+          </button>
+          <button
+            class="chip"
+            onclick="changeStatsPeriod('month')"
+            data-period="month"
+          >
+            This Month
+          </button>
+          <button
+            class="chip"
+            onclick="changeStatsPeriod('year')"
+            data-period="year"
+          >
+            This Year
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 16px">Spending by Category</h3>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 16px">Daily Trend</h3>
+          <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div id="insightsContainer"></div>
+      </div>
+
+      <!-- Goals Screen -->
+      <div id="goals" class="screen">
+        <div class="header">
+          <h1>Goals 🎯</h1>
+          <p>Track your financial targets</p>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="openGoalModal()"
+          style="margin-bottom: 16px"
+        >
+          + Add New Goal
+        </button>
+
+        <div id="goalsList"></div>
+      </div>
+
+      <!-- Profile Screen -->
+      <div id="profile" class="screen">
+        <div class="header">
+          <h1>Profile 👤</h1>
+          <p>Your financial journey</p>
+        </div>
+
+        <div class="card xp-card" id="profileXpCard">
+          <div
+            style="text-align: center; font-size: 64px; margin-bottom: 16px"
+            id="profileAvatar"
+          >
+            🌳
+          </div>
+          <div style="text-align: center">
+            <div
+              style="
+                font-size: clamp(20px, 5vw, 24px);
+                font-weight: 700;
+                margin-bottom: 8px;
+              "
+            >
+              Level <span id="profileLevel">1</span>
+            </div>
+            <div style="opacity: 0.9; margin-bottom: 16px">
+              <span id="profileXP">0</span> XP
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                gap: 16px;
+                font-size: 14px;
+              "
+            >
+              <div>🔥 <span id="streakCount">0</span> day streak</div>
+              <div>📊 <span id="categorizedCount">0</span> categorized</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 16px">Badges</h3>
+          <div class="badges-grid" id="badgesGrid"></div>
+        </div>
+
+        <button
+          class="btn btn-outline"
+          onclick="showSettings()"
+          style="margin-bottom: 8px"
+        >
+          ⚙️ Settings
+        </button>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <button
+          class="nav-item active"
+          data-screen="home"
+          onclick="navigate('home')"
+        >
+          <span class="icon">🏠</span>
+          <span>Home</span>
+        </button>
+        <button
+          class="nav-item"
+          data-screen="transactions"
+          onclick="navigate('transactions')"
+        >
+          <span class="icon">💸</span>
+          <span>Transactions</span>
+        </button>
+        <button
+          class="nav-item"
+          data-screen="stats"
+          onclick="navigate('stats')"
+        >
+          <span class="icon">📊</span>
+          <span>Stats</span>
+        </button>
+        <button
+          class="nav-item"
+          data-screen="goals"
+          onclick="navigate('goals')"
+        >
+          <span class="icon">🎯</span>
+          <span>Goals</span>
+        </button>
+        <button
+          class="nav-item"
+          data-screen="profile"
+          onclick="navigate('profile')"
+        >
+          <span class="icon">👤</span>
+          <span>Profile</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Check-in Modal -->
+    <div
+      id="checkInModal"
+      class="modal"
+      onclick="if(event.target === this) this.classList.remove('active')"
+    >
+      <div class="modal-content">
+        <div class="modal-header">Daily Check-in ✨</div>
+        <p
+          style="
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 20px;
+          "
+        >
+          Categorize your transactions to earn XP!
+        </p>
+        <div id="checkInList"></div>
+        <button
+          class="btn btn-primary"
+          onclick="confirmCheckIn()"
+          id="confirmCheckInBtn"
+          style="margin-top: 16px"
+        >
+          ✓ Confirm &amp; Earn XP
+        </button>
+      </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div id="goalModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">Create New Goal 🎯</div>
+        <div class="form-group">
+          <label class="form-label">Goal Name</label>
+          <input
+            type="text"
+            class="form-input"
+            id="goalName"
+            placeholder="e.g., Save for vacation"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Amount (₹)</label>
+          <input
+            type="number"
+            class="form-input"
+            id="goalAmount"
+            placeholder="50000"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input type="date" class="form-input" id="goalDeadline" />
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="closeGoalModal()">
+            Cancel
+          </button>
+          <button class="btn btn-primary" onclick="createGoal()">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">Settings ⚙️</div>
+
+        <div style="margin-bottom: 24px">
+          <h4 style="margin-bottom: 12px">Theme</h4>
+          <div class="theme-grid" id="themeSelector"></div>
+        </div>
+
+        <button
+          class="btn btn-secondary"
+          onclick="exportData()"
+          style="margin-bottom: 8px"
+        >
+          📥 Export Data
+        </button>
+        <button class="btn btn-danger" onclick="confirmDeleteData()">
+          🗑️ Delete All Data
+        </button>
+        <button
+          class="btn btn-outline"
+          onclick="closeSettings()"
+          style="margin-top: 16px"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button id="chatFAB" class="chat-fab" aria-label="Open AI Assistant">
+      🧞‍♂️
+    </button>
+
+    <!-- Sliding Chat Panel -->
+    <div id="chatPanel" class="chat-panel">
+      <div class="chat-panel-header">
+        <div class="chat-header-content">
+          <span class="genie-avatar-large">🧞‍♂️</span>
+          <div>
+            <h3 style="margin: 0; font-size: 18px">Financial Genie</h3>
+            <p class="chat-subtitle">Your AI Money Assistant</p>
+          </div>
+        </div>
+        <button
+          id="closeChatBtn"
+          class="close-chat-btn"
+          aria-label="Close chat"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-message assistant welcome">
+          <div class="message-avatar">🧞‍♂️</div>
+          <div class="message-bubble">
+            <p>
+              Hi! I'm your Financial Genie. Ask me anything about money,
+              investments, or budgeting! 💰✨
+            </p>
+            <span class="message-time">Now</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-prompts" id="quickPrompts">
+        <button class="prompt-chip">💰 How to save money?</button>
+        <button class="prompt-chip">📈 Investment tips</button>
+        <button class="prompt-chip">📊 Budget advice</button>
+        <button class="prompt-chip">🏦 Mutual funds</button>
+      </div>
+
+      <div class="chat-input-container">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Ask your financial question..."
+        />
+        <button id="sendBtn" class="send-btn" aria-label="Send message">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 10l16-8-6 16-2-6-8-2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Backdrop -->
+    <div id="chatBackdrop" class="chat-backdrop"></div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+      <div class="modal-content">
+        <div class="success-animation">
+          <div class="success-icon">🎉</div>
+          <h2 style="margin-bottom: 8px">Check-in Complete!</h2>
+          <p style="color: var(--text-light); margin-bottom: 16px">
+            You earned <strong id="earnedXP">0</strong> XP
+          </p>
+          <div id="levelUpMessage"></div>
+        </div>
+        <div id="adviceCard"></div>
+        <button class="btn btn-primary" onclick="closeSuccessModal()">
+          Awesome!
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // ==================== GEMINI API CONFIGURATION ====================
+      const GEMINI_API_KEY = "AIzaSyCHRK-DXlIhXkPTMQt9eJ8HsbYJrLIjtlk";
+      const GEMINI_ENDPOINT ="https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
+      // ==================== DATA STRUCTURES ====================
+      const CATEGORIES = [
+        {
+          name: "Food",
+          icon: "🍔",
+          subcategories: ["Food Delivery", "Groceries", "Dining Out", "Snacks"],
+        },
+        {
+          name: "Transport",
+          icon: "🚗",
+          subcategories: ["Taxi/Cab", "Fuel", "Public Transit", "Parking"],
+        },
+        {
+          name: "Shopping",
+          icon: "🛍️",
+          subcategories: ["Clothing", "Electronics", "Home Goods", "Gifts"],
+        },
+        {
+          name: "Bills",
+          icon: "💡",
+          subcategories: [
+            "Utilities",
+            "Phone/Internet",
+            "Subscriptions",
+            "Insurance",
+          ],
+        },
+        {
+          name: "Entertainment",
+          icon: "🎬",
+          subcategories: ["Movies", "Streaming", "Events", "Hobbies"],
+        },
+        {
+          name: "Investment",
+          icon: "📈",
+          subcategories: ["Stocks", "Mutual Funds", "Gold", "Crypto"],
+        },
+        {
+          name: "Income",
+          icon: "💰",
+          subcategories: ["Salary", "Freelance", "Business", "Other Income"],
+        },
+        {
+          name: "Other",
+          icon: "❓",
+          subcategories: ["Medical", "Education", "Travel", "Miscellaneous"],
+        },
+      ];
+
+      const VENDOR_DICTIONARY = {
+        Swiggy: { category: "Food", subcategory: "Food Delivery" },
+        Zomato: { category: "Food", subcategory: "Food Delivery" },
+        Uber: { category: "Transport", subcategory: "Taxi/Cab" },
+        Ola: { category: "Transport", subcategory: "Taxi/Cab" },
+        Amazon: { category: "Shopping", subcategory: "Electronics" },
+        Flipkart: { category: "Shopping", subcategory: "Electronics" },
+        Jio: { category: "Bills", subcategory: "Phone/Internet" },
+        Airtel: { category: "Bills", subcategory: "Phone/Internet" },
+        Netflix: { category: "Entertainment", subcategory: "Streaming" },
+        Spotify: { category: "Entertainment", subcategory: "Streaming" },
+        BookMyShow: { category: "Entertainment", subcategory: "Movies" },
+        DMart: { category: "Food", subcategory: "Groceries" },
+        BigBasket: { category: "Food", subcategory: "Groceries" },
+        Myntra: { category: "Shopping", subcategory: "Clothing" },
+        Paytm: { category: "Bills", subcategory: "Utilities" },
+        PhonePe: { category: "Bills", subcategory: "Utilities" },
+        GooglePay: { category: "Bills", subcategory: "Utilities" },
+      };
+
+      const THEMES = [
+        {
+          level: 1,
+          name: "Tree",
+          emoji: "🌳",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        },
+        {
+          level: 3,
+          name: "Human",
+          emoji: "👤",
+          background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+        },
+        {
+          level: 4,
+          name: "Space",
+          emoji: "🚀",
+          background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        },
+        {
+          level: 5,
+          name: "Ocean",
+          emoji: "🌊",
+          background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+        },
+      ];
+
+      const BADGES = [
+        {
+          id: "streak_warrior",
+          name: "Streak Warrior",
+          icon: "🔥",
+          description: "Check in for 7 consecutive days",
+        },
+        {
+          id: "category_master",
+          name: "Category Master",
+          icon: "🏆",
+          description: "Categorize 100 transactions",
+        },
+        {
+          id: "savings_superstar",
+          name: "Savings Superstar",
+          icon: "⭐",
+          description: "Complete a savings goal",
+        },
+        {
+          id: "investment_guru",
+          name: "Investment Guru",
+          icon: "📊",
+          description: "Tag 10+ investment transactions",
+        },
+      ];
+
+      const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 2000];
+
+      // ==================== STATE MANAGEMENT ====================
+      let state = {
+        user: {
+          id: generateId(),
+          name: "User",
+          avatar: "🌳",
+          createdAt: new Date().toISOString(),
+        },
+        gamification: {
+          xp: 0,
+          level: 1,
+          streak: 0,
+          lastCheckIn: null,
+          badges: [],
+          theme: "Tree",
+        },
+        transactions: [],
+        goals: [],
+        settings: {
+          adviceTone: "friendly",
+          notificationEnabled: false,
+        },
+      };
+
+      let currentFilter = "all";
+      let currentPeriod = "month";
+      let categoryChart = null;
+      let trendChart = null;
+
+      // ==================== UTILITY FUNCTIONS ====================
+      function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      }
+
+      function formatCurrency(amount) {
+        return "₹" + Math.abs(amount).toLocaleString("en-IN");
+      }
+
+      function formatDate(date) {
+        const d = new Date(date);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (d.toDateString() === today.toDateString()) return "Today";
+        if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+        return d.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+        });
+      }
+
+      function calculateLevel(xp) {
+        for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+          if (xp >= LEVEL_THRESHOLDS[i]) {
+            return i + 1;
+          }
+        }
+        return 1;
+      }
+
+      function getXPForNextLevel(level) {
+        return (
+          LEVEL_THRESHOLDS[level] ||
+          LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 1000
+        );
+      }
+
+      function getThemeForLevel(level) {
+        for (let i = THEMES.length - 1; i >= 0; i--) {
+          if (level >= THEMES[i].level) {
+            return THEMES[i];
+          }
+        }
+        return THEMES[0];
+      }
+
+      // ==================== DATA PERSISTENCE ====================
+      // Using in-memory state (localStorage not available in sandbox)
+      function saveState() {
+        // State is maintained in memory throughout the session
+        console.log("State saved in memory");
+      }
+
+      function loadState() {
+        // Check if state has already been initialized
+        return state.transactions.length > 0;
+      }
+
+      // ==================== DEMO DATA GENERATOR ====================
+      function generateDemoTransactions() {
+        const vendors = [
+          { name: "Swiggy", amounts: [250, 350, 450, 550] },
+          { name: "Zomato", amounts: [300, 400, 500] },
+          { name: "Uber", amounts: [120, 180, 250] },
+          { name: "Ola", amounts: [100, 150, 200] },
+          { name: "Amazon", amounts: [500, 1200, 2500] },
+          { name: "Flipkart", amounts: [800, 1500, 3000] },
+          { name: "Jio", amounts: [599, 799] },
+          { name: "Airtel", amounts: [499, 699] },
+          { name: "Netflix", amounts: [649] },
+          { name: "Spotify", amounts: [119] },
+          { name: "BookMyShow", amounts: [300, 500] },
+          { name: "DMart", amounts: [1200, 1800, 2500] },
+          { name: "BigBasket", amounts: [1500, 2300, 3000] },
+          { name: "Myntra", amounts: [1000, 1800, 2500] },
+        ];
+
+        const transactions = [];
+        const now = new Date();
+
+        // Generate 25 transactions over past 30 days
+        for (let i = 0; i < 25; i++) {
+          const daysAgo = Math.floor(Math.random() * 30);
+          const vendor = vendors[Math.floor(Math.random() * vendors.length)];
+          const amount =
+            vendor.amounts[Math.floor(Math.random() * vendor.amounts.length)];
+          const timestamp = new Date(now);
+          timestamp.setDate(timestamp.getDate() - daysAgo);
+
+          const autoCategory = VENDOR_DICTIONARY[vendor.name];
+          const shouldCategorize = Math.random() < 0.7; // 70% pre-categorized
+
+          transactions.push({
+            id: generateId(),
+            amount: amount,
+            counterparty: vendor.name,
+            timestamp: timestamp.toISOString(),
+            source: "UPI",
+            category:
+              shouldCategorize && autoCategory ? autoCategory.category : null,
+            subcategory:
+              shouldCategorize && autoCategory
+                ? autoCategory.subcategory
+                : null,
+            type: "debit",
+            confidence: autoCategory ? 95 : 0,
+            rawText: `UPI payment to ${vendor.name}`,
+          });
+        }
+
+        // Add 2-3 income transactions
+        const incomeTransactions = [
+          { name: "Salary", amount: 50000 },
+          { name: "Freelance Work", amount: 15000 },
+          { name: "Bonus", amount: 10000 },
+        ];
+
+        for (let i = 0; i < 2; i++) {
+          const income = incomeTransactions[i];
+          const timestamp = new Date(now);
+          timestamp.setDate(timestamp.getDate() - (i * 15 + 5));
+
+          transactions.push({
+            id: generateId(),
+            amount: income.amount,
+            counterparty: income.name,
+            timestamp: timestamp.toISOString(),
+            source: "UPI",
+            category: "Income",
+            subcategory: income.name === "Salary" ? "Salary" : "Freelance",
+            type: "credit",
+            confidence: 100,
+            rawText: `Credit: ${income.name}`,
+          });
+        }
+
+        return transactions.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+      }
+
+      // ==================== NAVIGATION ====================
+      function navigate(screenName) {
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => s.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+
+        document.getElementById(screenName).classList.add("active");
+        document
+          .querySelector(`[data-screen="${screenName}"]`)
+          .classList.add("active");
+
+        if (screenName === "transactions") {
+          renderTransactions();
+        } else if (screenName === "stats") {
+          renderStats();
+        } else if (screenName === "goals") {
+          renderGoals();
+        } else if (screenName === "profile") {
+          renderProfile();
+        } else if (screenName === "home") {
+          renderHome();
+        }
+      }
+
+      // ==================== SMART INSIGHTS ====================
+      function generateInsights() {
+        const txs = state.transactions.filter((t) => t.category);
+        const insights = [];
+
+        if (txs.length === 0) return insights;
+
+        // Spending by category
+        const categoryTotals = {};
+        txs.forEach((t) => {
+          if (t.type === "debit" && t.category) {
+            categoryTotals[t.category] =
+              (categoryTotals[t.category] || 0) + t.amount;
+          }
+        });
+
+        const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+
+        // Find highest spending category
+        if (Object.keys(categoryTotals).length > 0) {
+          const highest = Object.entries(categoryTotals).sort(
+            (a, b) => b[1] - a[1]
+          )[0];
+          const [cat, amt] = highest;
+          const pct = ((amt / total) * 100).toFixed(0);
+
+          if (pct > 30) {
+            const category = CATEGORIES.find((c) => c.name === cat);
+            insights.push({
+              type: "warning",
+              icon: category ? category.icon : "⚠️",
+              title: `High ${cat} Spending`,
+              text: `You spent ${formatCurrency(
+                amt
+              )} on ${cat} (${pct}%). Consider setting a budget to control expenses!`,
+              action: "Set Budget",
+            });
+          }
+        }
+
+        // Investment tip
+        const income = txs
+          .filter((t) => t.type === "credit")
+          .reduce((s, t) => s + t.amount, 0);
+        const expenses = total;
+        const savings = income - expenses;
+
+        if (savings > 5000) {
+          insights.push({
+            type: "investment",
+            icon: "📈",
+            title: "Investment Opportunity",
+            text: `You have ${formatCurrency(
+              savings
+            )} unspent this month. Start a SIP in index funds for long-term wealth building!`,
+            action: "Learn More",
+          });
+        }
+
+        // Streak motivation
+        if (state.gamification.streak >= 7) {
+          insights.push({
+            type: "success",
+            icon: "🔥",
+            title: "Amazing Streak!",
+            text: `${state.gamification.streak} day check-in streak! Keep building this financial awareness habit.`,
+            action: "Share",
+          });
+        }
+
+        // Random stock tip (mock)
+        const stockTips = [
+          {
+            icon: "📊",
+            title: "Market Update",
+            text: "Nifty 50 up 1.2% today. Good time to review your portfolio allocation.",
+          },
+          {
+            icon: "🪙",
+            title: "Gold Alert",
+            text: "Gold prices stable at ₹62,000/10g. Consider 10% allocation for diversification.",
+          },
+          {
+            icon: "🏦",
+            title: "Banking Sector",
+            text: "Bank stocks showing strength. Research HDFC, ICICI for long-term investment.",
+          },
+          {
+            icon: "💰",
+            title: "Savings Rate",
+            text: "Your savings rate is strong! Experts recommend 40-50% for financial freedom.",
+          },
+        ];
+        insights.push({
+          type: "info",
+          ...stockTips[Math.floor(Math.random() * stockTips.length)],
+          action: "View Details",
+        });
+
+        return insights;
+      }
+
+      function renderInsightsCards() {
+        const container = document.getElementById("insightCards");
+        const insights = generateInsights();
+
+        if (insights.length === 0) {
+          container.innerHTML =
+            '<p style="color: var(--text-light); font-size: 14px;">Complete check-ins to get personalized insights!</p>';
+          return;
+        }
+
+        container.innerHTML = insights
+          .map(
+            (insight) => `
+                <div class="insight-card ${insight.type}">
+                    <div class="insight-icon-main">${insight.icon}</div>
+                    <div class="insight-content">
+                        <div class="insight-title">${insight.title}</div>
+                        <div class="insight-text">${insight.text}</div>
+                        <button class="insight-action" onclick="handleInsightAction('${insight.action}')">${insight.action}</button>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function handleInsightAction(action) {
+        if (action === "Set Budget") {
+          navigate("goals");
+        } else if (action === "Learn More") {
+          navigate("chatbot");
+          setTimeout(() => {
+            document.getElementById("chatInput").value =
+              "Tell me about SIP investments for beginners";
+            document.getElementById("sendBtn").click();
+          }, 300);
+        } else {
+          alert("Feature coming soon!");
+        }
+      }
+
+      // ==================== HOME SCREEN ====================
+      function renderHome() {
+        const { gamification, transactions } = state;
+        const theme = getThemeForLevel(gamification.level);
+        const currentXP = gamification.xp;
+        const currentLevel = gamification.level;
+        const nextLevelXP = getXPForNextLevel(currentLevel);
+        const prevLevelXP =
+          currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel - 1] : 0;
+        const progress =
+          ((currentXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100;
+
+        // Update XP card
+        document.getElementById("levelEmoji").textContent = theme.emoji;
+        document.getElementById("currentLevel").textContent = currentLevel;
+        document.getElementById("currentXP").textContent = currentXP;
+        document.getElementById("nextLevelXP").textContent = nextLevelXP;
+        document.getElementById("xpBarFill").style.width = progress + "%";
+        document.getElementById("themeName").textContent = theme.name;
+        document.getElementById("xpCard").style.background = theme.background;
+
+        // Calculate month stats
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthTransactions = transactions.filter(
+          (t) => new Date(t.timestamp) >= monthStart
+        );
+
+        const spending = monthTransactions
+          .filter((t) => t.type === "debit")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const income = monthTransactions
+          .filter((t) => t.type === "credit")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        document.getElementById("monthSpending").textContent =
+          formatCurrency(spending);
+        document.getElementById("monthIncome").textContent =
+          formatCurrency(income);
+        document.getElementById("monthBalance").textContent = formatCurrency(
+          income - spending
+        );
+
+        // Update check-in button
+        const uncategorized = transactions.filter((t) => !t.category).length;
+        document.getElementById("uncategorizedCount").textContent =
+          uncategorized;
+
+        // Show advice if available
+        renderAdvice();
+
+        // Render insights cards
+        renderInsightsCards();
+      }
+
+      function renderAdvice() {
+        const container = document.getElementById("adviceContainer");
+        const advice = generateAdvice();
+
+        if (advice) {
+          container.innerHTML = `
+                    <div class="insight-card" style="margin-top: 16px;">
+                        <div class="insight-icon">💡</div>
+                        <div class="insight-text">${advice}</div>
+                    </div>
+                `;
+        } else {
+          container.innerHTML = "";
+        }
+      }
+
+      function generateAdvice() {
+        const { transactions } = state;
+        if (transactions.length === 0) return null;
+
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        const thisMonth = transactions.filter(
+          (t) => new Date(t.timestamp) >= monthStart && t.type === "debit"
+        );
+        const lastMonth = transactions.filter((t) => {
+          const d = new Date(t.timestamp);
+          return d >= lastMonthStart && d <= lastMonthEnd && t.type === "debit";
+        });
+
+        const thisMonthTotal = thisMonth.reduce((sum, t) => sum + t.amount, 0);
+        const lastMonthTotal = lastMonth.reduce((sum, t) => sum + t.amount, 0);
+
+        // Check food spending
+        const foodSpending = thisMonth
+          .filter((t) => t.category === "Food")
+          .reduce((sum, t) => sum + t.amount, 0);
+        const foodPercent =
+          thisMonthTotal > 0
+            ? ((foodSpending / thisMonthTotal) * 100).toFixed(0)
+            : 0;
+
+        if (foodPercent > 35) {
+          return `Your food spending is ${foodPercent}% of total. Consider meal prepping to save money! 🍱`;
+        }
+
+        // Compare months
+        if (lastMonthTotal > 0) {
+          const change = (
+            ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) *
+            100
+          ).toFixed(0);
+          if (change > 10) {
+            return `You spent ${change}% more this month. Review your expenses to stay on budget. 📊`;
+          } else if (change < -10) {
+            return `Great job! You spent ${Math.abs(
+              change
+            )}% less this month. Keep it up! 🎉`;
+          }
+        }
+
+        // Check goals
+        const activeGoals = state.goals.filter((g) => !g.completed);
+        if (activeGoals.length > 0) {
+          const goal = activeGoals[0];
+          const progress = (
+            (goal.currentAmount / goal.targetAmount) *
+            100
+          ).toFixed(0);
+          if (progress >= 50) {
+            return `You're ${progress}% to your ${goal.name} goal - keep it up! 💪`;
+          }
+        }
+
+        return "Great job keeping track of your finances! 🌟";
+      }
+
+      // ==================== CHECK-IN ====================
+      function openCheckIn() {
+        const uncategorized = state.transactions.filter((t) => !t.category);
+
+        if (uncategorized.length === 0) {
+          alert("All transactions are categorized! 🎉");
+          return;
+        }
+
+        // Clear previous selections
+        Object.keys(checkInSelections).forEach(
+          (key) => delete checkInSelections[key]
+        );
+
+        const modal = document.getElementById("checkInModal");
+        const list = document.getElementById("checkInList");
+
+        list.innerHTML = uncategorized
+          .map(
+            (t) => `
+                <div class="transaction-item" style="flex-direction: column; align-items: flex-start;" data-id="${
+                  t.id
+                }">
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <div class="transaction-icon">❓</div>
+                        <div class="transaction-info">
+                            <div class="transaction-name">${
+                              t.counterparty
+                            }</div>
+                            <div class="transaction-category">${formatDate(
+                              t.timestamp
+                            )}</div>
+                        </div>
+                        <div class="transaction-amount ${t.type}">
+                            ${t.type === "debit" ? "-" : "+"}${formatCurrency(
+              t.amount
+            )}
+                        </div>
+                    </div>
+                    <div class="category-chips" id="chips-${t.id}">
+                        ${CATEGORIES.map(
+                          (cat) => `
+                            <button class="chip" 
+                                    data-category="${cat.name}" 
+                                    data-transaction="${t.id}"
+                                    aria-pressed="false"
+                                    onclick="selectCategory('${t.id}', '${cat.name}', this)"
+                                    style="min-height: 44px;">
+                                ${cat.icon} ${cat.name}
+                            </button>
+                        `
+                        ).join("")}
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+
+        modal.classList.add("active");
+      }
+
+      // Track selected categories per transaction during check-in
+      const checkInSelections = {};
+
+      function selectCategory(transactionId, category, chipElement) {
+        // Store selection temporarily
+        checkInSelections[transactionId] = category;
+
+        // Update UI
+        const chips = document.getElementById(`chips-${transactionId}`);
+        if (chips) {
+          chips.querySelectorAll(".chip").forEach((c) => {
+            c.classList.remove("selected");
+            c.setAttribute("aria-pressed", "false");
+          });
+
+          // Find and select the clicked chip
+          const selectedChip = Array.from(chips.querySelectorAll(".chip")).find(
+            (c) => c.textContent.includes(category)
+          );
+          if (selectedChip) {
+            selectedChip.classList.add("selected");
+            selectedChip.setAttribute("aria-pressed", "true");
+          }
+        }
+      }
+
+      function confirmCheckIn() {
+        // Apply selections to actual transactions
+        const selectedCount = Object.keys(checkInSelections).length;
+
+        if (selectedCount === 0) {
+          alert("Please categorize at least one transaction");
+          return;
+        }
+
+        // Update transactions with selected categories
+        Object.keys(checkInSelections).forEach((transactionId) => {
+          const transaction = state.transactions.find(
+            (t) => t.id === transactionId
+          );
+          if (transaction) {
+            const category = checkInSelections[transactionId];
+            transaction.category = category;
+            const categoryData = CATEGORIES.find((c) => c.name === category);
+            if (categoryData && categoryData.subcategories.length > 0) {
+              transaction.subcategory = categoryData.subcategories[0];
+            }
+          }
+        });
+
+        const categorizedInCheckIn = selectedCount;
+
+        // Calculate XP
+        let xpEarned = 0;
+
+        // Check-in bonus
+        const today = new Date().toDateString();
+        const lastCheckIn = state.gamification.lastCheckIn
+          ? new Date(state.gamification.lastCheckIn).toDateString()
+          : null;
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toDateString();
+
+        if (lastCheckIn === yesterdayStr) {
+          state.gamification.streak++;
+        } else if (lastCheckIn !== today) {
+          state.gamification.streak = 1;
+        }
+
+        const streakBonus = Math.min(state.gamification.streak, 10);
+        xpEarned += 10 + streakBonus;
+
+        // Categorization XP
+        xpEarned += categorizedInCheckIn * 5;
+
+        // Investment bonus
+        const investmentTransactions = Object.keys(checkInSelections).filter(
+          (id) => checkInSelections[id] === "Investment"
+        );
+        xpEarned += investmentTransactions.length * 15;
+
+        const oldLevel = state.gamification.level;
+        state.gamification.xp += xpEarned;
+        state.gamification.level = calculateLevel(state.gamification.xp);
+        state.gamification.lastCheckIn = new Date().toISOString();
+
+        // Check for badges
+        checkBadges();
+
+        saveState();
+
+        // Clear selections
+        Object.keys(checkInSelections).forEach(
+          (key) => delete checkInSelections[key]
+        );
+
+        // Show success modal
+        document.getElementById("checkInModal").classList.remove("active");
+        showSuccessModal(xpEarned, oldLevel !== state.gamification.level);
+
+        // Show XP animation
+        showXPFloat(xpEarned);
+
+        if (oldLevel !== state.gamification.level) {
+          showConfetti();
+        }
+      }
+
+      function checkBadges() {
+        const { gamification, transactions, goals } = state;
+
+        // Streak Warrior
+        if (
+          gamification.streak >= 7 &&
+          !gamification.badges.includes("streak_warrior")
+        ) {
+          gamification.badges.push("streak_warrior");
+        }
+
+        // Category Master
+        const categorized = transactions.filter((t) => t.category).length;
+        if (
+          categorized >= 100 &&
+          !gamification.badges.includes("category_master")
+        ) {
+          gamification.badges.push("category_master");
+        }
+
+        // Savings Superstar
+        const completed = goals.filter((g) => g.completed).length;
+        if (
+          completed >= 1 &&
+          !gamification.badges.includes("savings_superstar")
+        ) {
+          gamification.badges.push("savings_superstar");
+        }
+
+        // Investment Guru
+        const investments = transactions.filter(
+          (t) => t.category === "Investment"
+        ).length;
+        if (
+          investments >= 10 &&
+          !gamification.badges.includes("investment_guru")
+        ) {
+          gamification.badges.push("investment_guru");
+        }
+      }
+
+      function showSuccessModal(xp, leveledUp) {
+        const modal = document.getElementById("successModal");
+        document.getElementById("earnedXP").textContent = `${xp} XP`;
+
+        const levelUpMessage = document.getElementById("levelUpMessage");
+        if (leveledUp) {
+          const theme = getThemeForLevel(state.gamification.level);
+          levelUpMessage.innerHTML = `
+                    <div style="background: var(--accent); color: var(--text-dark); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">${theme.emoji}</div>
+                        <div style="font-weight: 700;">Level Up! Now Level ${state.gamification.level}</div>
+                        <div style="font-size: 14px; margin-top: 4px;">${theme.name} theme unlocked!</div>
+                    </div>
+                `;
+        } else {
+          levelUpMessage.innerHTML = "";
+        }
+
+        const adviceCard = document.getElementById("adviceCard");
+        const advice = generateAdvice();
+        if (advice) {
+          adviceCard.innerHTML = `
+                    <div class="insight-card">
+                        <div class="insight-icon">💡</div>
+                        <div class="insight-text">${advice}</div>
+                    </div>
+                `;
+        }
+
+        modal.classList.add("active");
+      }
+
+      function closeSuccessModal() {
+        document.getElementById("successModal").classList.remove("active");
+        renderHome();
+      }
+
+      function showXPFloat(xp) {
+        const element = document.createElement("div");
+        element.className = "xp-float";
+        element.textContent = `+${xp} XP`;
+        element.style.left = "50%";
+        element.style.top = "60%";
+        element.style.transform = "translate(-50%, -50%)";
+        element.style.textShadow = "0 2px 4px rgba(0,0,0,0.2)";
+        document.body.appendChild(element);
+
+        // Animate with requestAnimationFrame for smooth 60fps
+        let startTime = null;
+        const duration = 800;
+
+        function animate(currentTime) {
+          if (!startTime) startTime = currentTime;
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          element.style.transform = `translate(-50%, ${
+            -50 - progress * 100
+          }px)`;
+          element.style.opacity = 1 - progress;
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            element.remove();
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function showConfetti() {
+        const colors = ["#6C5CE7", "#00B894", "#FDCB6E", "#FF6B6B", "#A29BFE"];
+        for (let i = 0; i < 30; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement("div");
+            confetti.className = "confetti";
+            confetti.style.left = Math.random() * 100 + "%";
+            confetti.style.background =
+              colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 0.5 + "s";
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 1000);
+          }, i * 30);
+        }
+      }
+
+      // ==================== TRANSACTIONS ====================
+      function renderTransactions() {
+        const list = document.getElementById("transactionsList");
+        let transactions = state.transactions;
+
+        if (currentFilter === "debit") {
+          transactions = transactions.filter((t) => t.type === "debit");
+        } else if (currentFilter === "credit") {
+          transactions = transactions.filter((t) => t.type === "credit");
+        }
+
+        if (transactions.length === 0) {
+          list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-title">No Transactions</div>
+                        <div class="empty-desc">Your transactions will appear here</div>
+                    </div>
+                `;
+          return;
+        }
+
+        list.innerHTML = transactions
+          .map((t) => {
+            const category = CATEGORIES.find((c) => c.name === t.category);
+            const icon = category ? category.icon : "❓";
+            return `
+                    <div class="transaction-item">
+                        <div class="transaction-icon">${icon}</div>
+                        <div class="transaction-info">
+                            <div class="transaction-name">${
+                              t.counterparty
+                            }</div>
+                            <div class="transaction-category">${
+                              t.category || "Uncategorized"
+                            } • ${formatDate(t.timestamp)}</div>
+                        </div>
+                        <div class="transaction-amount ${t.type}">
+                            ${t.type === "debit" ? "-" : "+"}${formatCurrency(
+              t.amount
+            )}
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      function filterTransactions(filter) {
+        currentFilter = filter;
+        document.querySelectorAll("[data-filter]").forEach((btn) => {
+          btn.classList.toggle("selected", btn.dataset.filter === filter);
+        });
+        renderTransactions();
+      }
+
+      // ==================== STATISTICS ====================
+      function renderStats() {
+        const { transactions } = state;
+        const categorized = transactions.filter(
+          (t) => t.category && t.type === "debit"
+        );
+
+        if (categorized.length === 0) {
+          document.getElementById("insightsContainer").innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-title">No Data Yet</div>
+                        <div class="empty-desc">Complete your first check-in to see insights</div>
+                    </div>
+                `;
+          return;
+        }
+
+        // Filter by period
+        const now = new Date();
+        let periodTransactions = categorized;
+
+        if (currentPeriod === "week") {
+          const weekAgo = new Date(now);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          periodTransactions = categorized.filter(
+            (t) => new Date(t.timestamp) >= weekAgo
+          );
+        } else if (currentPeriod === "month") {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          periodTransactions = categorized.filter(
+            (t) => new Date(t.timestamp) >= monthStart
+          );
+        } else if (currentPeriod === "year") {
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          periodTransactions = categorized.filter(
+            (t) => new Date(t.timestamp) >= yearStart
+          );
+        }
+
+        renderCategoryChart(periodTransactions);
+        renderTrendChart(periodTransactions);
+        renderInsights(periodTransactions);
+      }
+
+      function renderCategoryChart(transactions) {
+        const categoryTotals = {};
+        transactions.forEach((t) => {
+          categoryTotals[t.category] =
+            (categoryTotals[t.category] || 0) + t.amount;
+        });
+
+        const data = {
+          labels: Object.keys(categoryTotals),
+          datasets: [
+            {
+              data: Object.values(categoryTotals),
+              backgroundColor: [
+                "#6C5CE7",
+                "#00B894",
+                "#FDCB6E",
+                "#FF6B6B",
+                "#A29BFE",
+                "#74B9FF",
+                "#FF7675",
+                "#FD79A8",
+                "#FDCB6E",
+                "#55EFC4",
+              ],
+            },
+          ],
+        };
+
+        const ctx = document.getElementById("categoryChart");
+        if (categoryChart) categoryChart.destroy();
+
+        categoryChart = new Chart(ctx, {
+          type: "doughnut",
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+
+      function renderTrendChart(transactions) {
+        // Group by date
+        const dailyTotals = {};
+        transactions.forEach((t) => {
+          const date = new Date(t.timestamp).toLocaleDateString("en-IN");
+          dailyTotals[date] = (dailyTotals[date] || 0) + t.amount;
+        });
+
+        const sortedDates = Object.keys(dailyTotals).sort(
+          (a, b) => new Date(a) - new Date(b)
+        );
+        const labels = sortedDates.map((d) => {
+          const date = new Date(d);
+          return date.getDate() + "/" + (date.getMonth() + 1);
+        });
+        const data = sortedDates.map((d) => dailyTotals[d]);
+
+        const ctx = document.getElementById("trendChart");
+        if (trendChart) trendChart.destroy();
+
+        trendChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Spending",
+                data: data,
+                borderColor: "#6C5CE7",
+                backgroundColor: "rgba(108, 92, 231, 0.1)",
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return "₹" + value;
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderInsights(transactions) {
+        const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+        const categoryTotals = {};
+        transactions.forEach((t) => {
+          categoryTotals[t.category] =
+            (categoryTotals[t.category] || 0) + t.amount;
+        });
+
+        const topCategory = Object.keys(categoryTotals).reduce(
+          (a, b) => (categoryTotals[a] > categoryTotals[b] ? a : b),
+          Object.keys(categoryTotals)[0]
+        );
+
+        const topAmount = categoryTotals[topCategory];
+        const topPercent = ((topAmount / total) * 100).toFixed(0);
+
+        const insights = [
+          {
+            icon: "💳",
+            text: `Total spending: ${formatCurrency(total)}`,
+          },
+          {
+            icon: "📊",
+            text: `Top category: ${topCategory} (${topPercent}%)`,
+          },
+          {
+            icon: "📈",
+            text: `${transactions.length} transactions tracked`,
+          },
+        ];
+
+        document.getElementById("insightsContainer").innerHTML = insights
+          .map(
+            (insight) => `
+                <div class="insight-card">
+                    <div class="insight-icon">${insight.icon}</div>
+                    <div class="insight-text">${insight.text}</div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function changeStatsPeriod(period) {
+        currentPeriod = period;
+        document.querySelectorAll("[data-period]").forEach((btn) => {
+          btn.classList.toggle("selected", btn.dataset.period === period);
+        });
+        renderStats();
+      }
+
+      // ==================== GOALS ====================
+      function renderGoals() {
+        const list = document.getElementById("goalsList");
+        const { goals } = state;
+
+        if (goals.length === 0) {
+          list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <div class="empty-title">No Goals Yet</div>
+                        <div class="empty-desc">Set your first financial goal to earn bonus XP!</div>
+                    </div>
+                `;
+          return;
+        }
+
+        list.innerHTML = goals
+          .map((goal) => {
+            const progress = (
+              (goal.currentAmount / goal.targetAmount) *
+              100
+            ).toFixed(0);
+            const daysLeft = Math.ceil(
+              (new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24)
+            );
+
+            return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-name">${goal.name}</div>
+                            <div>${formatCurrency(
+                              goal.currentAmount
+                            )} / ${formatCurrency(goal.targetAmount)}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: ${Math.min(
+                              progress,
+                              100
+                            )}%;"></div>
+                        </div>
+                        <div class="progress-text">
+                            ${progress}% complete • ${
+              daysLeft > 0 ? daysLeft + " days left" : "Overdue"
+            }
+                        </div>
+                        ${
+                          goal.completed
+                            ? '<div style="margin-top: 8px; color: var(--secondary); font-weight: 600;">✓ Completed!</div>'
+                            : ""
+                        }
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      function openGoalModal() {
+        document.getElementById("goalModal").classList.add("active");
+      }
+
+      function closeGoalModal() {
+        document.getElementById("goalModal").classList.remove("active");
+        document.getElementById("goalName").value = "";
+        document.getElementById("goalAmount").value = "";
+        document.getElementById("goalDeadline").value = "";
+      }
+
+      function createGoal() {
+        const name = document.getElementById("goalName").value.trim();
+        const amount = parseFloat(document.getElementById("goalAmount").value);
+        const deadline = document.getElementById("goalDeadline").value;
+
+        if (!name || !amount || !deadline) {
+          alert("Please fill in all fields");
+          return;
+        }
+
+        if (amount <= 0) {
+          alert("Amount must be positive");
+          return;
+        }
+
+        const goal = {
+          id: generateId(),
+          name: name,
+          targetAmount: amount,
+          currentAmount: 0,
+          deadline: deadline,
+          createdAt: new Date().toISOString(),
+          completed: false,
+        };
+
+        state.goals.push(goal);
+        saveState();
+        closeGoalModal();
+        renderGoals();
+      }
+
+      // ==================== PROFILE ====================
+      function renderProfile() {
+        const { gamification, transactions } = state;
+        const theme = getThemeForLevel(gamification.level);
+
+        document.getElementById("profileAvatar").textContent = theme.emoji;
+        document.getElementById("profileLevel").textContent =
+          gamification.level;
+        document.getElementById("profileXP").textContent = gamification.xp;
+        document.getElementById("streakCount").textContent =
+          gamification.streak;
+        document.getElementById("profileXpCard").style.background =
+          theme.background;
+
+        const categorized = transactions.filter((t) => t.category).length;
+        document.getElementById("categorizedCount").textContent = categorized;
+
+        renderBadges();
+      }
+
+      function renderBadges() {
+        const grid = document.getElementById("badgesGrid");
+        const { gamification } = state;
+
+        grid.innerHTML = BADGES.map((badge) => {
+          const unlocked = gamification.badges.includes(badge.id);
+          return `
+                    <div class="badge-card ${unlocked ? "" : "locked"}">
+                        <span class="badge-icon">${badge.icon}</span>
+                        <div class="badge-name">${badge.name}</div>
+                        <div class="badge-desc">${badge.description}</div>
+                        ${
+                          unlocked
+                            ? '<div style="color: var(--secondary); margin-top: 8px; font-weight: 600;">✓ Unlocked</div>'
+                            : '<div style="color: var(--text-light); margin-top: 8px; font-size: 11px;">🔒 Locked</div>'
+                        }
+                    </div>
+                `;
+        }).join("");
+      }
+
+      // ==================== SETTINGS ====================
+      function showSettings() {
+        const modal = document.getElementById("settingsModal");
+        renderThemeSelector();
+        modal.classList.add("active");
+      }
+
+      function closeSettings() {
+        document.getElementById("settingsModal").classList.remove("active");
+      }
+
+      function renderThemeSelector() {
+        const container = document.getElementById("themeSelector");
+        const { gamification } = state;
+
+        container.innerHTML = THEMES.map((theme) => {
+          const unlocked = gamification.level >= theme.level;
+          const selected = gamification.theme === theme.name;
+          return `
+                    <div class="theme-card ${selected ? "selected" : ""} ${
+            unlocked ? "" : "locked"
+          }" 
+                         style="background: ${theme.background};" 
+                         onclick="${
+                           unlocked ? `selectTheme('${theme.name}')` : ""
+                         }">
+                        <div class="theme-emoji">${theme.emoji}</div>
+                        <div class="theme-name" style="color: white;">${
+                          theme.name
+                        }</div>
+                        <div style="color: rgba(255,255,255,0.8); font-size: 11px;">
+                            ${
+                              unlocked
+                                ? "Available"
+                                : `Level ${theme.level} required`
+                            }
+                        </div>
+                    </div>
+                `;
+        }).join("");
+      }
+
+      function selectTheme(themeName) {
+        state.gamification.theme = themeName;
+        saveState();
+        renderThemeSelector();
+        renderHome();
+        renderProfile();
+      }
+
+      function exportData() {
+        const dataStr = JSON.stringify(state, null, 2);
+        const dataBlob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download =
+          "fingenie-data-" + new Date().toISOString().split("T")[0] + ".json";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function confirmDeleteData() {
+        if (
+          confirm(
+            "Are you sure you want to delete all data? This cannot be undone!"
+          )
+        ) {
+          // Reset state to initial values
+          state = {
+            user: {
+              id: generateId(),
+              name: "User",
+              avatar: "🌳",
+              createdAt: new Date().toISOString(),
+            },
+            gamification: {
+              xp: 0,
+              level: 1,
+              streak: 0,
+              lastCheckIn: null,
+              badges: [],
+              theme: "Tree",
+            },
+            transactions: [],
+            goals: [],
+            settings: {
+              adviceTone: "friendly",
+              notificationEnabled: false,
+            },
+          };
+          // Reinitialize with demo data
+          init();
+          navigate("home");
+        }
+      }
+
+      // ==================== GEMINI AI CHATBOT ====================
+    async function askGemini(userMessage, context = null) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const totalSpent = context?.totalSpent ?? 0;
+    const topCategory = context?.topCategory ?? "None";
+    const savings = context?.savings ?? 0;
+
+    // Simple mock logic
+    if (/food|meal|restaurant/i.test(userMessage)) {
+        return `🍱 Looks like you're spending a lot on food this month (₹${totalSpent}). Consider cooking at home or meal prepping!`;
+    } else if (/save|saving|budget/i.test(userMessage)) {
+        return `💰 You have saved ₹${savings} so far. Try setting a monthly limit for your top category: ${topCategory}, to improve savings!`;
+    } else {
+        return `💡 You spent ₹${totalSpent} this month, mainly on ${topCategory}. Keep tracking your expenses to stay on budget!`;
+    }
+}
+
+// ==================== CHAT FUNCTION ====================
+function addMessage(text, isUser = false) {
+    const msgDiv = document.createElement('div'); // ✅ make sure msgDiv exists
+    msgDiv.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
+
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+    msgDiv.innerHTML = `
+        <div class="message-avatar">${isUser ? '👤' : '🧞‍♂️'}</div>
+        <div class="message-bubble">
+            <p>${text}</p>
+            <span class="message-time">${time}</span>
+        </div>
+    `;
+
+    document.getElementById('chatMessages').appendChild(msgDiv);
+    scrollToBottom();
+}
+
+// ==================== TYPING INDICATOR ====================
+function addTypingIndicator() {
+    const div = document.createElement('div');
+    div.id = 'typing-indicator';
+    div.className = 'chat-message assistant';
+    div.innerHTML = `
+        <div class="message-avatar">🧞‍♂️</div>
+        <div class="message-bubble typing">
+            <span></span><span></span><span></span>
+        </div>
+    `;
+    document.getElementById('chatMessages').appendChild(div);
+    scrollToBottom();
+}
+
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) indicator.remove();
+}
+
+// ==================== SCROLL TO BOTTOM ====================
+function scrollToBottom() {
+    const msgs = document.getElementById('chatMessages');
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+
+      function getUserContext() {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthTransactions = state.transactions.filter(
+          (t) => new Date(t.timestamp) >= monthStart
+        );
+
+        const spending = monthTransactions
+          .filter((t) => t.type === "debit")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const income = monthTransactions
+          .filter((t) => t.type === "credit")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const categoryTotals = {};
+        monthTransactions.forEach((t) => {
+          if (t.type === "debit" && t.category) {
+            categoryTotals[t.category] =
+              (categoryTotals[t.category] || 0) + t.amount;
+          }
+        });
+
+        const topCategory =
+          Object.keys(categoryTotals).length > 0
+            ? Object.keys(categoryTotals).reduce((a, b) =>
+                categoryTotals[a] > categoryTotals[b] ? a : b
+              )
+            : "None";
+
+        return {
+          totalSpent: spending.toFixed(0),
+          topCategory: topCategory,
+          savings: (income - spending).toFixed(0),
+        };
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("chatInput");
+        const message = input.value.trim();
+        if (!message) return;
+
+        // Disable input while processing
+        input.disabled = true;
+        document.getElementById("sendBtn").disabled = true;
+
+        // Add user message
+        addMessage(message, true);
+        input.value = "";
+
+        // Show typing indicator
+        addTypingIndicator();
+
+        // Get user's spending context
+        const context = getUserContext();
+
+        // Get AI response
+        const response = await askGemini(message, context);
+
+        // Remove typing indicator and add response
+        removeTypingIndicator();
+        addMessage(response, false);
+
+        // Re-enable input
+        input.disabled = false;
+        document.getElementById("sendBtn").disabled = false;
+        input.focus();
+      }
+
+      // ==================== CHAT PANEL CONTROLS ====================
+      function openChat() {
+        const chatPanel = document.getElementById("chatPanel");
+        const chatBackdrop = document.getElementById("chatBackdrop");
+        const chatFAB = document.getElementById("chatFAB");
+
+        chatPanel.classList.add("open");
+        chatBackdrop.classList.add("visible");
+        chatFAB.classList.add("hidden");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeChat() {
+        const chatPanel = document.getElementById("chatPanel");
+        const chatBackdrop = document.getElementById("chatBackdrop");
+        const chatFAB = document.getElementById("chatFAB");
+
+        chatPanel.classList.remove("open");
+        chatBackdrop.classList.remove("visible");
+        chatFAB.classList.remove("hidden");
+        document.body.style.overflow = "";
+      }
+
+      function initChatbot() {
+        const chatFAB = document.getElementById("chatFAB");
+        const closeChatBtn = document.getElementById("closeChatBtn");
+        const chatBackdrop = document.getElementById("chatBackdrop");
+        const sendBtn = document.getElementById("sendBtn");
+        const chatInput = document.getElementById("chatInput");
+
+        // FAB click to open
+        chatFAB.addEventListener("click", openChat);
+
+        // Close button click
+        closeChatBtn.addEventListener("click", closeChat);
+
+        // Backdrop click to close
+        chatBackdrop.addEventListener("click", closeChat);
+
+        // ESC key to close
+        document.addEventListener("keydown", (e) => {
+          if (
+            e.key === "Escape" &&
+            document.getElementById("chatPanel").classList.contains("open")
+          ) {
+            closeChat();
+          }
+        });
+
+        // Send message
+        sendBtn.addEventListener("click", sendMessage);
+
+        // Enter key to send
+        chatInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+
+        // Quick prompt clicks
+        document.querySelectorAll(".prompt-chip").forEach((chip) => {
+          chip.onclick = () => {
+            document.getElementById("chatInput").value = chip.textContent;
+            sendMessage();
+          };
+        });
+      }
+
+      // ==================== INITIALIZATION ====================
+      function init() {
+        const loaded = loadState();
+
+        if (!loaded || state.transactions.length === 0) {
+          // First time user - generate demo data
+          state.transactions = generateDemoTransactions();
+          state.gamification.xp = 50;
+          state.gamification.level = 1;
+          state.gamification.streak = 1;
+          state.gamification.lastCheckIn = new Date().toISOString();
+          saveState();
+        }
+
+        renderHome();
+      }
+
+      // Start the app
+      init();
+      initChatbot();
+    </script>
+  </body>
+</html>
