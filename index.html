@@ -1559,10 +1559,6 @@
     </div>
 
     <script>
-      // ==================== GEMINI API CONFIGURATION ====================
-      const GEMINI_API_KEY = "AIzaSyCHRK-DXlIhXkPTMQt9eJ8HsbYJrLIjtlk";
-      const GEMINI_ENDPOINT ="https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
-      // ==================== DATA STRUCTURES ====================
       const CATEGORIES = [
         {
           name: "Food",
@@ -1687,7 +1683,6 @@
 
       const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 2000];
 
-      // ==================== STATE MANAGEMENT ====================
       let state = {
         user: {
           id: generateId(),
@@ -1765,19 +1760,14 @@
         return THEMES[0];
       }
 
-      // ==================== DATA PERSISTENCE ====================
-      // Using in-memory state (localStorage not available in sandbox)
       function saveState() {
-        // State is maintained in memory throughout the session
         console.log("State saved in memory");
       }
 
       function loadState() {
-        // Check if state has already been initialized
         return state.transactions.length > 0;
       }
 
-      // ==================== DEMO DATA GENERATOR ====================
       function generateDemoTransactions() {
         const vendors = [
           { name: "Swiggy", amounts: [250, 350, 450, 550] },
@@ -1799,7 +1789,7 @@
         const transactions = [];
         const now = new Date();
 
-        // Generate 25 transactions over past 30 days
+
         for (let i = 0; i < 25; i++) {
           const daysAgo = Math.floor(Math.random() * 30);
           const vendor = vendors[Math.floor(Math.random() * vendors.length)];
@@ -1829,7 +1819,6 @@
           });
         }
 
-        // Add 2-3 income transactions
         const incomeTransactions = [
           { name: "Salary", amount: 50000 },
           { name: "Freelance Work", amount: 15000 },
@@ -1860,7 +1849,6 @@
         );
       }
 
-      // ==================== NAVIGATION ====================
       function navigate(screenName) {
         document
           .querySelectorAll(".screen")
@@ -1887,7 +1875,6 @@
         }
       }
 
-      // ==================== SMART INSIGHTS ====================
       function generateInsights() {
         const txs = state.transactions.filter((t) => t.category);
         const insights = [];
@@ -1905,7 +1892,6 @@
 
         const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
 
-        // Find highest spending category
         if (Object.keys(categoryTotals).length > 0) {
           const highest = Object.entries(categoryTotals).sort(
             (a, b) => b[1] - a[1]
@@ -1927,7 +1913,6 @@
           }
         }
 
-        // Investment tip
         const income = txs
           .filter((t) => t.type === "credit")
           .reduce((s, t) => s + t.amount, 0);
@@ -1946,7 +1931,6 @@
           });
         }
 
-        // Streak motivation
         if (state.gamification.streak >= 7) {
           insights.push({
             type: "success",
@@ -1957,7 +1941,6 @@
           });
         }
 
-        // Random stock tip (mock)
         const stockTips = [
           {
             icon: "📊",
@@ -2029,8 +2012,6 @@
           alert("Feature coming soon!");
         }
       }
-
-      // ==================== HOME SCREEN ====================
       function renderHome() {
         const { gamification, transactions } = state;
         const theme = getThemeForLevel(gamification.level);
@@ -2042,7 +2023,6 @@
         const progress =
           ((currentXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100;
 
-        // Update XP card
         document.getElementById("levelEmoji").textContent = theme.emoji;
         document.getElementById("currentLevel").textContent = currentLevel;
         document.getElementById("currentXP").textContent = currentXP;
@@ -2051,7 +2031,6 @@
         document.getElementById("themeName").textContent = theme.name;
         document.getElementById("xpCard").style.background = theme.background;
 
-        // Calculate month stats
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthTransactions = transactions.filter(
@@ -2074,15 +2053,13 @@
           income - spending
         );
 
-        // Update check-in button
         const uncategorized = transactions.filter((t) => !t.category).length;
         document.getElementById("uncategorizedCount").textContent =
           uncategorized;
 
-        // Show advice if available
         renderAdvice();
 
-        // Render insights cards
+
         renderInsightsCards();
       }
 
@@ -2126,7 +2103,6 @@
         const thisMonthTotal = thisMonth.reduce((sum, t) => sum + t.amount, 0);
         const lastMonthTotal = lastMonth.reduce((sum, t) => sum + t.amount, 0);
 
-        // Check food spending
         const foodSpending = thisMonth
           .filter((t) => t.category === "Food")
           .reduce((sum, t) => sum + t.amount, 0);
@@ -2139,7 +2115,7 @@
           return `Your food spending is ${foodPercent}% of total. Consider meal prepping to save money! 🍱`;
         }
 
-        // Compare months
+
         if (lastMonthTotal > 0) {
           const change = (
             ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) *
